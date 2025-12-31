@@ -1,0 +1,58 @@
+{
+  "name": "creoguard-cli",
+  "version": "1.0.0",
+  "description": "AI-powered code review CLI that runs before every commit. Catch bugs, security issues, and best practice violations before they reach your codebase.",
+  "main": "dist/index.js",
+  "bin": {
+    "creoguard": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "code-review",
+    "git-hooks",
+    "pre-commit",
+    "ai",
+    "openai",
+    "anthropic",
+    "ollama",
+    "linting",
+    "security",
+    "best-practices",
+    "developer-tools",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "type": "module",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "cosmiconfig": "^9.0.0",
+    "inquirer": "^9.2.23",
+    "ora": "^8.0.1",
+    "simple-git": "^3.25.0",
+    "boxen": "^7.1.1",
+    "minimatch": "^9.0.5",
+    "pdf-parse": "^1.1.1",
+    "openai": "^4.52.0",
+    "@anthropic-ai/sdk": "^0.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "@types/inquirer": "^9.0.7",
+    "typescript": "^5.5.3"
+  }
+}

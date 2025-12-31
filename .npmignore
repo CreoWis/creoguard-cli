@@ -1,0 +1,23 @@
+# Source files (we only ship dist/)
+src/
+
+# Config files
+tsconfig.json
+.gitignore
+.prettierrc
+.eslintrc
+
+# IDE
+.idea/
+.vscode/
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__/
+coverage/
+
+# Development
+*.log
+.env
+.env.*
