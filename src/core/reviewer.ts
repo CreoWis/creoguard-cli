@@ -233,13 +233,32 @@ export async function reviewCode(options: ReviewOptions): Promise<ReviewSummary>
       );
 
       const response = await provider.review(prompt);
-      const batchResults = parseBatchReviewResponse(response);
+      const batchResults = parseBatchReviewResponse(response, options.verbose);
 
       spinner.succeed(`Reviewed ${diffs.length} files`);
 
       // Process results
       for (const diff of diffs) {
-        const issues = batchResults[diff.path] || [];
+        // Try exact match first, then try to find a matching key
+        let issues = batchResults[diff.path];
+
+        if (!issues) {
+          // Try to find a key that contains or matches the filename
+          const filename = diff.path.split('/').pop();
+          for (const key of Object.keys(batchResults)) {
+            if (key === diff.path || key.endsWith(diff.path) || diff.path.endsWith(key) || key.includes(filename || '')) {
+              issues = batchResults[key];
+              break;
+            }
+          }
+        }
+
+        // Check for _default key (when LLM returns array instead of object)
+        if (!issues && batchResults["_default"]) {
+          issues = batchResults["_default"];
+        }
+
+        issues = issues || [];
         results.push({ filePath: diff.path, issues });
 
         for (const issue of issues) {

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import { createRequire } from "module";
 import { initCommand } from "./commands/init.js";
 import { configCommand } from "./commands/config.js";
 import { reviewCommand } from "./commands/review.js";
@@ -12,6 +13,9 @@ import {
   guidelinesRemoveCommand,
 } from "./commands/guidelines.js";
 
+const require = createRequire(import.meta.url);
+const packageJson = require("../package.json");
+
 const program = new Command();
 
 program
@@ -19,7 +23,7 @@ program
   .description(
     "AI-powered code review CLI that runs before every commit. Catch bugs, security issues, and best practice violations."
   )
-  .version("1.0.0");
+  .version(packageJson.version);
 
 // Initialize CreoGuard in current repository
 program

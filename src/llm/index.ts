@@ -71,8 +71,12 @@ export function parseReviewResponse(response: string): ReviewIssue[] {
   }
 }
 
-export function parseBatchReviewResponse(response: string): BatchReviewResult {
+export function parseBatchReviewResponse(response: string, verbose?: boolean): BatchReviewResult {
   let jsonStr = response.trim();
+
+  if (verbose) {
+    console.log("\n[DEBUG] Raw LLM response:", response.substring(0, 500), "...\n");
+  }
 
   // Handle markdown code blocks
   const jsonMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -85,7 +89,19 @@ export function parseBatchReviewResponse(response: string): BatchReviewResult {
 
     // Handle object response
     if (typeof parsed === "object" && !Array.isArray(parsed)) {
+      if (verbose) {
+        console.log("[DEBUG] Parsed batch response keys:", Object.keys(parsed));
+      }
       return parsed as BatchReviewResult;
+    }
+
+    // If it's an array, it might be a single-file response format
+    // Try to return it as a generic result
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      if (verbose) {
+        console.log("[DEBUG] Got array response with", parsed.length, "issues");
+      }
+      return { "_default": parsed } as BatchReviewResult;
     }
 
     return {};
@@ -94,13 +110,36 @@ export function parseBatchReviewResponse(response: string): BatchReviewResult {
     const objectMatch = response.match(/\{[\s\S]*\}/);
     if (objectMatch) {
       try {
-        return JSON.parse(objectMatch[0]) as BatchReviewResult;
+        const parsed = JSON.parse(objectMatch[0]);
+        if (verbose) {
+          console.log("[DEBUG] Parsed from object match, keys:", Object.keys(parsed));
+        }
+        return parsed as BatchReviewResult;
+      } catch {
+        // Ignore
+      }
+    }
+
+    // Try to find JSON array in the response
+    const arrayMatch = response.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      try {
+        const parsed = JSON.parse(arrayMatch[0]);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          if (verbose) {
+            console.log("[DEBUG] Parsed array with", parsed.length, "issues");
+          }
+          return { "_default": parsed } as BatchReviewResult;
+        }
       } catch {
         // Ignore
       }
     }
 
     console.error("Failed to parse batch review response:", error);
+    if (verbose) {
+      console.log("[DEBUG] Full response was:", response);
+    }
     return {};
   }
 }
