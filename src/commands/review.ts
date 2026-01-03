@@ -12,13 +12,11 @@ export async function reviewCommand(options: ReviewOptions): Promise<void> {
     process.exit(1);
   }
 
-  // Check if CreoGuard is initialized
+  // Check if CreoGuard is initialized - exit if not to avoid unnecessary API calls
   if (!(await isInitialized(cwd))) {
     logger.warning("CreoGuard is not initialized in this repository.");
     logger.info("Run 'creoguard init' to set up CreoGuard.");
-    logger.newLine();
-    logger.info("Proceeding with review anyway...");
-    logger.newLine();
+    process.exit(0);
   }
 
   try {
