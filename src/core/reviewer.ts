@@ -1,6 +1,6 @@
 import { logger } from "../utils/logger.js";
 import { createSpinner } from "../utils/spinner.js";
-import { getStagedFiles, getFileDiff, getUncommittedFiles, StagedFile, FileDiff } from "./git.js";
+import { getStagedFiles, getFileDiff, getUncommittedFiles, StagedFile, FileDiff, annotateDiffWithLineNumbers, annotateContentWithLineNumbers } from "./git.js";
 import { loadFullConfig } from "../config/loader.js";
 import { buildReviewPrompt, buildBatchReviewPrompt } from "../prompts/review.js";
 import {
@@ -87,6 +87,20 @@ async function loadCompanyGuidelines(
   // Combine and summarize guidelines to fit within token limits
   const combined = guidelinesSources.join("\n\n---\n\n");
   return summarizeGuidelines(combined, 6000); // Limit to ~6000 chars to leave room for code
+}
+
+/**
+ * Returns the diff string annotated with actual file line numbers.
+ * For diffs with hunk headers, parses the headers to determine line numbers.
+ * For raw file content (new files with no diff headers), adds sequential line numbers.
+ */
+function getAnnotatedDiff(diff: FileDiff): string {
+  const hasDiffHeaders = diff.diff.startsWith("diff ") || diff.diff.includes("\n@@ ");
+  if (hasDiffHeaders) {
+    return annotateDiffWithLineNumbers(diff.diff);
+  }
+  // Raw file content (newly added file) — add line numbers
+  return annotateContentWithLineNumbers(diff.diff);
 }
 
 export async function reviewCode(options: ReviewOptions): Promise<ReviewSummary> {
@@ -225,7 +239,7 @@ export async function reviewCode(options: ReviewOptions): Promise<ReviewSummary>
 
     try {
       const prompt = buildBatchReviewPrompt(
-        diffs.map((d) => ({ filePath: d.path, language: d.language, diff: d.diff })),
+        diffs.map((d) => ({ filePath: d.path, language: d.language, diff: getAnnotatedDiff(d) })),
         config.reviewLevel,
         config.rules,
         config.customPrompt,
@@ -289,7 +303,7 @@ export async function reviewCode(options: ReviewOptions): Promise<ReviewSummary>
         const prompt = buildReviewPrompt({
           filePath: diff.path,
           language: diff.language,
-          diff: diff.diff,
+          diff: getAnnotatedDiff(diff),
           reviewLevel: config.reviewLevel,
           rules: config.rules,
           customPrompt: config.customPrompt,
@@ -425,7 +439,7 @@ export async function checkFile(
     const prompt = buildReviewPrompt({
       filePath: diff.path,
       language: diff.language,
-      diff: diff.diff,
+      diff: getAnnotatedDiff(diff),
       reviewLevel: config.reviewLevel,
       rules: config.rules,
       customPrompt: config.customPrompt,

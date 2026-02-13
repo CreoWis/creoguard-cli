@@ -225,6 +225,68 @@ export function getLanguageFromExtension(filePath: string): string {
   return languageMap[ext] || "text";
 }
 
+/**
+ * Annotates a unified diff with actual file line numbers so the LLM
+ * can accurately reference line numbers in the new version of the file.
+ *
+ * Input:  raw unified diff from git
+ * Output: diff lines prefixed with "L<number>: " for context/added lines,
+ *         or "      : " for removed lines and headers.
+ */
+export function annotateDiffWithLineNumbers(diff: string): string {
+  const lines = diff.split("\n");
+  const annotated: string[] = [];
+  let currentNewLine = 0;
+
+  for (const line of lines) {
+    // Parse hunk header to get the new file starting line number
+    const hunkMatch = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    if (hunkMatch) {
+      currentNewLine = parseInt(hunkMatch[1], 10);
+      annotated.push(line);
+      continue;
+    }
+
+    // Skip diff metadata lines (---, +++, diff --git, index, etc.)
+    if (
+      line.startsWith("diff ") ||
+      line.startsWith("index ") ||
+      line.startsWith("--- ") ||
+      line.startsWith("+++ ") ||
+      line.startsWith("\\")
+    ) {
+      annotated.push(line);
+      continue;
+    }
+
+    if (line.startsWith("-")) {
+      // Removed line — no new-file line number
+      annotated.push(`       : ${line}`);
+    } else if (line.startsWith("+")) {
+      // Added line — has a new-file line number
+      annotated.push(`L${String(currentNewLine).padStart(5)}: ${line}`);
+      currentNewLine++;
+    } else {
+      // Context line — has a new-file line number
+      annotated.push(`L${String(currentNewLine).padStart(5)}: ${line}`);
+      currentNewLine++;
+    }
+  }
+
+  return annotated.join("\n");
+}
+
+/**
+ * Adds line numbers to plain file content (for newly added files
+ * that have no diff).
+ */
+export function annotateContentWithLineNumbers(content: string): string {
+  const lines = content.split("\n");
+  return lines
+    .map((line, i) => `L${String(i + 1).padStart(5)}: ${line}`)
+    .join("\n");
+}
+
 export async function getHooksPath(cwd: string = process.cwd()): Promise<string> {
   const gitRoot = await getGitRoot(cwd);
   if (!gitRoot) {

@@ -76,6 +76,7 @@ ${guidelinesSection}
 ${customPrompt ? `## Additional Instructions\n${customPrompt}\n` : ""}
 
 ## Code Changes (Diff)
+Each line is prefixed with its actual file line number (e.g. "L   42: " means line 42 in the file). Removed lines have no line number prefix.
 \`\`\`${language}
 ${diff}
 \`\`\`
@@ -84,7 +85,7 @@ ${diff}
 Respond with a JSON array of issues found. Each issue should have:
 - \`severity\`: "critical", "warning", or "info"
 - \`category\`: "security", "performance", "bestPractices", "codeStyle", or "companyGuidelines"
-- \`line\`: line number if applicable (null if not specific to a line)
+- \`line\`: the ACTUAL file line number from the "L" prefix annotations above (e.g. if the issue is on a line prefixed "L   42:", use 42). Use null if not specific to a line.
 - \`message\`: brief description of the issue
 - \`currentCode\`: the problematic code snippet (if applicable)
 - \`suggestedFix\`: how to fix it (code snippet if applicable)
@@ -169,6 +170,7 @@ ${companyGuidelines}
   const filesContent = files
     .map(
       (f, i) => `### File ${i + 1}: ${f.filePath} (${f.language})
+Each line is prefixed with its actual file line number (e.g. "L   42: " means line 42). Removed lines have no line number prefix.
 \`\`\`${f.language}
 ${f.diff}
 \`\`\``
@@ -195,7 +197,7 @@ Respond with a JSON object where keys are file paths and values are arrays of is
 Each issue should have:
 - \`severity\`: "critical", "warning", or "info"
 - \`category\`: "security", "performance", "bestPractices", "codeStyle", or "companyGuidelines"
-- \`line\`: line number if applicable (null if not)
+- \`line\`: the ACTUAL file line number from the "L" prefix annotations in the diff (e.g. if the issue is on a line prefixed "L   42:", use 42). Use null if not specific to a line.
 - \`message\`: brief description
 - \`currentCode\`: problematic code (if applicable)
 - \`suggestedFix\`: how to fix it
