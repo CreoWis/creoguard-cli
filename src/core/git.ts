@@ -40,24 +40,42 @@ export async function getStagedFiles(cwd: string = process.cwd()): Promise<Stage
   const status = await gitInstance.status();
 
   const files: StagedFile[] = [];
+  const seen = new Set<string>();
 
-  for (const file of status.staged) {
-    files.push({ path: file, status: "modified" });
-  }
-
+  // Created (new) files that are staged — must check before the staged loop
+  // so we assign the correct "added" status instead of "modified"
+  const stagedCreated = new Set<string>();
   for (const file of status.created) {
     if (status.staged.includes(file) || (await isFileStaged(file, cwd))) {
-      files.push({ path: file, status: "added" });
+      stagedCreated.add(file);
     }
   }
 
+  for (const file of status.staged) {
+    if (seen.has(file)) continue;
+    seen.add(file);
+    // Use "added" if this is a newly created file, otherwise "modified"
+    files.push({ path: file, status: stagedCreated.has(file) ? "added" : "modified" });
+  }
+
+  // Pick up any created files that weren't in status.staged but are staged
+  for (const file of stagedCreated) {
+    if (seen.has(file)) continue;
+    seen.add(file);
+    files.push({ path: file, status: "added" });
+  }
+
   for (const file of status.deleted) {
+    if (seen.has(file)) continue;
     if (await isFileStaged(file, cwd)) {
+      seen.add(file);
       files.push({ path: file, status: "deleted" });
     }
   }
 
   for (const file of status.renamed) {
+    if (seen.has(file.to)) continue;
+    seen.add(file.to);
     files.push({ path: file.to, status: "renamed" });
   }
 
