@@ -1,5 +1,5 @@
 {
-  "name": "creoguard-cli",
+  "name": "@creowis/creoguard-cli",
   "version": "1.0.5",
   "description": "AI-powered code review CLI that runs before every commit. Catch bugs, security issues, and best practice violations before they reach your codebase.",
   "main": "dist/index.js",
@@ -31,7 +31,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/CreoWis/creoguard-cli"
   },
   "engines": {
     "node": ">=18.0.0"
